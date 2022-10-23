@@ -26,3 +26,4 @@ elixpay-*.tar
 /tmp/
 
 accounts.txt
+*_test.txt

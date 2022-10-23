@@ -32,7 +32,7 @@ defmodule AccountTest do
 
       {:ok, account} = Account.create("111", 100.0, "accounts_test.txt")
 
-      assert account = %Account{}
+      assert account.__struct__ == Account
     end
 
     test "returns error when there is already an account with received pix key" do
@@ -51,15 +51,35 @@ defmodule AccountTest do
     end
 
     test "return an %Account{} when received pix key matches with an register" do
-      response = Account.create("111", 42.0, "accounts_test.txt")
+      Account.create("111", 42.0, "accounts_test.txt")
 
       result = Account.get_account_by_pix_key("111", "accounts_test.txt")
 
-      assert result = %Account{}
+      assert result.__struct__ == Account
     end
 
     test "return nil when there are no account with received pix_key" do
       result = Account.get_account_by_pix_key("111", "accounts_test.txt")
+
+      assert result == nil
+    end
+  end
+
+  describe "find/1" do
+    setup do
+      Elixpay.setup("accounts_test.txt")
+    end
+
+    test "return an %Account{} when received pix key matches with an register" do
+      {:ok, account} = Account.create("111", 42.0, "accounts_test.txt")
+
+      result = Account.find(account.id, "accounts_test.txt")
+
+      assert result.__struct__ == Account
+    end
+
+    test "return nil when there are no account with received pix_key" do
+      result = Account.find("111", "accounts_test.txt")
 
       assert result == nil
     end

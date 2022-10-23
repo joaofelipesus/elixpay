@@ -45,6 +45,18 @@ defmodule Account do
     |> Enum.find(fn account -> account.pix_key == pix_key end)
   end
 
+  @doc """
+  Get account by id.
+
+  ## Params
+
+  - id[String]: id of an account.
+  """
+  def find(id, repository_name \\ @repository_name) do
+    read_accounts(repository_name)
+    |> Enum.find(fn account -> account.id == id end)
+  end
+
   defp write(account, repository_name) do
     accounts = read_accounts(repository_name) ++ [account]
     binary_accounts = :erlang.term_to_binary(accounts)

@@ -44,4 +44,24 @@ defmodule AccountTest do
       assert result == {:error, "Pix key already related to an account"}
     end
   end
+
+  describe "get_account_by_pix_key" do
+    setup do
+      Elixpay.setup("accounts_test.txt")
+    end
+
+    test "return an %Account{} when received pix key matches with an register" do
+      response = Account.create("111", 42.0, "accounts_test.txt")
+
+      result = Account.get_account_by_pix_key("111", "accounts_test.txt")
+
+      assert result = %Account{}
+    end
+
+    test "return nil when there are no account with received pix_key" do
+      result = Account.get_account_by_pix_key("111", "accounts_test.txt")
+
+      assert result == nil
+    end
+  end
 end

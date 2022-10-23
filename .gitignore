@@ -24,3 +24,6 @@ elixpay-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+accounts.txt
+*_test.txt

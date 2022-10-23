@@ -3,16 +3,16 @@ defmodule Elixpay do
   Documentation for `Elixpay`.
   """
 
+  @default_value :erlang.term_to_binary([])
+
   @doc """
-  Hello world.
+  Creates files used to persist data.
 
-  ## Examples
-
-      iex> Elixpay.hello()
-      :world
-
+  Created files:
+    - accounts.txt
   """
-  def hello do
-    :world
+  def setup(accounts_file \\ "accounts.txt") do
+    File.rm(accounts_file)
+    File.write(accounts_file, @default_value)
   end
 end

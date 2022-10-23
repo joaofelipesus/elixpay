@@ -30,9 +30,9 @@ defmodule AccountTest do
     test "return ok and save account register when there are no matching pix_key" do
       Elixpay.setup("accounts_test.txt")
 
-      result = Account.create("111", 100.0, "accounts_test.txt")
+      {:ok, account} = Account.create("111", 100.0, "accounts_test.txt")
 
-      assert result == {:ok, "Account created with success"}
+      assert account = %Account{}
     end
 
     test "returns error when there is already an account with received pix key" do

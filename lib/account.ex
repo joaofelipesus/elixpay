@@ -17,10 +17,10 @@ defmodule Account do
         {:error, "Pix key already related to an account"}
 
       nil ->
-        %__MODULE__{id: UUID.uuid4(), pix_key: pix_key, amount: amount}
-        |> write(repository_name)
+        account = %__MODULE__{id: UUID.uuid4(), pix_key: pix_key, amount: amount}
+        write(account, repository_name)
 
-        {:ok, "Account created with success"}
+        {:ok, account}
     end
   end
 

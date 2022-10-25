@@ -70,6 +70,33 @@ defmodule Transaction do
     end
   end
 
+  def history(
+        account_id,
+        accounts_repo \\ @accounts_repo,
+        transactions_repo \\ @transactions_repo
+      ) do
+    account = Account.find(account_id, accounts_repo)
+
+    case account do
+      nil ->
+        {:error, "Account don't exist"}
+
+      %Account{} ->
+        IO.puts("+--------------------------------------|-----------|-------+")
+        IO.puts("|                  ID                  |   STATUS  | VALUE |")
+        IO.puts("+--------------------------------------|-----------|-------+")
+        read_transactions(transactions_repo)
+        |> Enum.filter(fn transaction ->
+          transaction.from_account == account_id || transaction.to_account == account_id
+        end)
+        |> Enum.sort_by( &(&1.created_at), Date)
+        |> Enum.each(fn transaction ->
+          color = status_color(transaction.status)
+          IO.puts("| #{transaction.id} | #{color} #{transaction.status} #{reset_color()} | #{transaction_kind(account_id, transaction)} |")
+        end)
+    end
+  end
+
   defp validation(receiving_account, transfering_account, amount) do
     cond do
       receiving_account == nil -> {:error, "Received pix_key don't belong to any account."}
@@ -130,5 +157,23 @@ defmodule Transaction do
       key_used: pix_key,
       created_at: DateTime.utc_now()
     }
+  end
+
+  defp status_color(status) do
+    case status do
+      :success -> IO.ANSI.green()
+      :error -> IO.ANSI.red()
+    end
+  end
+
+  defp reset_color do
+    IO.ANSI.white()
+  end
+
+  defp transaction_kind(history_id, transaction) do
+    cond do
+      history_id == transaction.from_account -> "#{IO.ANSI.blue()} +#{transaction.amount} #{reset_color()}"
+      history_id == transaction.to_account -> "#{IO.ANSI.yellow()} -#{transaction.amount} #{reset_color()}"
+    end
   end
 end

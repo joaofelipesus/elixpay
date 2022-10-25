@@ -63,4 +63,12 @@ defmodule TrannsactionTest do
       assert transaction.status == :success
     end
   end
+
+  describe "history/3" do
+    test "returns error message when account don't exist" do
+      response = Transaction.history("1q2w3e", "accounts_test.txt", "transactions_test.txt")
+
+      assert response == {:error, "Account don't exist"}
+    end
+  end
 end

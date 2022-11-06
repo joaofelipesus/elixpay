@@ -26,7 +26,7 @@ defmodule Transaction do
         from,
         pix_key,
         amount,
-        accounts_repo \\ Account.accounts_repo,
+        accounts_repo \\ Account.accounts_repo(),
         transactions_repo \\ @transactions_repo
       ) do
     receiving_account = Account.get_account_by_pix_key(pix_key, accounts_repo)
@@ -41,12 +41,14 @@ defmodule Transaction do
 
     case {status, message} do
       {:success, _message} ->
-        transaction =
-          transaction_builder(amount, transfering_account.id, receiving_account.id, pix_key)
 
-        write(transaction, transactions_repo)
-        # TODO: update account amounts.
-        {:ok, transaction}
+        Services.Transfers.Transfer.call(
+          amount,
+          transfering_account,
+          receiving_account,
+          transactions_repo,
+          accounts_repo
+        )
 
       {:error, message} ->
         Services.Transfers.TransactionErrorBuilder.call(
@@ -105,19 +107,6 @@ defmodule Transaction do
     transactions = read_transactions(repository_name) ++ [transaction]
     binary_transactions = :erlang.term_to_binary(transactions)
     File.write(repository_name, binary_transactions)
-  end
-
-  defp transaction_builder(amount, transfering, receiving, pix_key) do
-    %Transaction{
-      id: UUID.uuid4(),
-      amount: amount,
-      status: :success,
-      error_message: nil,
-      from_account: transfering,
-      to_account: receiving,
-      key_used: pix_key,
-      created_at: DateTime.utc_now()
-    }
   end
 
   defp status_color(status) do

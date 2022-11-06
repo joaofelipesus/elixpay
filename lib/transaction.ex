@@ -33,7 +33,8 @@ defmodule Transaction do
       ) do
     receiving_account = Account.get_account_by_pix_key(pix_key, accounts_repo)
     transfering_account = Account.find(from, accounts_repo)
-    {status, message} = validation(receiving_account, transfering_account, amount)
+    {status, message} =
+      Services.Transfers.Validations.call(receiving_account, transfering_account, amount)
 
     case {status, message} do
       {:success, _message} ->
@@ -101,15 +102,6 @@ defmodule Transaction do
             "| #{transaction.id} | #{color} #{transaction.status} #{reset_color()} | #{transaction_kind(account_id, transaction)} |"
           )
         end)
-    end
-  end
-
-  defp validation(receiving_account, transfering_account, amount) do
-    cond do
-      receiving_account == nil -> {:error, "Received pix_key don't belong to any account."}
-      transfering_account == nil -> {:error, "Received id don't belong to any account."}
-      transfering_account.amount < amount -> {:error, "Insufficient founds."}
-      true -> {:success, "OK"}
     end
   end
 

@@ -1,8 +1,6 @@
 defmodule Transaction do
   @accounts_repo "accounts.txt"
   @transactions_repo "transactions.txt"
-  @without_receiving_error_message "Received pix_key don't belong to any account."
-  @without_transfering_error_message "Received id don't belong to any account."
 
   defstruct id: nil,
             from_account: nil,
@@ -28,13 +26,18 @@ defmodule Transaction do
         from,
         pix_key,
         amount,
-        accounts_repo \\ @accounts_repo,
+        accounts_repo \\ Account.accounts_repo,
         transactions_repo \\ @transactions_repo
       ) do
     receiving_account = Account.get_account_by_pix_key(pix_key, accounts_repo)
     transfering_account = Account.find(from, accounts_repo)
+
     {status, message} =
-      Services.Transfers.Validations.call(receiving_account, transfering_account, amount)
+      Services.Transfers.Validations.call(
+        receiving_account,
+        transfering_account,
+        amount
+      )
 
     case {status, message} do
       {:success, _message} ->
@@ -45,29 +48,14 @@ defmodule Transaction do
         # TODO: update account amounts.
         {:ok, transaction}
 
-      {:error, @without_transfering_error_message} ->
-        transaction_without_transfering_builder(amount, receiving_account.id, pix_key)
-        |> write(transactions_repo)
-
-        {:error, message}
-
-      {:error, @without_receiving_error_message} ->
-        transaction_without_receiver_builder(amount, transfering_account.id, pix_key)
-        |> write(transactions_repo)
-
-        {:error, message}
-
-      {:error, _message} ->
-        %Transaction{
-          id: UUID.uuid4(),
-          amount: amount,
-          status: :error,
-          error_message: message,
-          from_account: transfering_account.id,
-          to_account: receiving_account.id,
-          key_used: pix_key,
-          created_at: DateTime.utc_now()
-        }
+      {:error, message} ->
+        Services.Transfers.TransactionErrorBuilder.call(
+          transfering_account,
+          receiving_account,
+          amount,
+          pix_key,
+          message
+        )
         |> write(transactions_repo)
 
         {:error, message}
@@ -117,32 +105,6 @@ defmodule Transaction do
     transactions = read_transactions(repository_name) ++ [transaction]
     binary_transactions = :erlang.term_to_binary(transactions)
     File.write(repository_name, binary_transactions)
-  end
-
-  defp transaction_without_receiver_builder(amount, transfering_account, pix_key) do
-    %Transaction{
-      id: UUID.uuid4(),
-      amount: amount,
-      status: :error,
-      error_message: @without_receiving_error_message,
-      from_account: transfering_account,
-      to_account: nil,
-      key_used: pix_key,
-      created_at: DateTime.utc_now()
-    }
-  end
-
-  defp transaction_without_transfering_builder(amount, receiving_account, pix_key) do
-    %Transaction{
-      id: UUID.uuid4(),
-      amount: amount,
-      status: :error,
-      error_message: @without_transfering_error_message,
-      from_account: nil,
-      to_account: receiving_account,
-      key_used: pix_key,
-      created_at: DateTime.utc_now()
-    }
   end
 
   defp transaction_builder(amount, transfering, receiving, pix_key) do

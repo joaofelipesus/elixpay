@@ -84,4 +84,26 @@ defmodule AccountTest do
       assert result == nil
     end
   end
+
+  describe "add_amount/2" do
+    test "increase current amount and persist on received repository" do
+      Elixpay.setup("accounts_test.txt")
+
+      {:ok, account} = Account.create("111", 100.0, "accounts_test.txt")
+      {:ok, updated_account} = Account.add_amount(account, 120, "accounts_test.txt")
+
+      assert updated_account.amount == 220
+    end
+  end
+
+  describe "subtract_amount/2" do
+    test "increase current amount and persist on received repository" do
+      Elixpay.setup("accounts_test.txt")
+
+      {:ok, account} = Account.create("111", 100.0, "accounts_test.txt")
+      {:ok, updated_account} = Account.subtract_amount(account, 40, "accounts_test.txt")
+
+      assert updated_account.amount == 60
+    end
+  end
 end

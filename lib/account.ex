@@ -59,9 +59,49 @@ defmodule Account do
     |> Enum.find(fn account -> account.id == id end)
   end
 
+  @doc """
+  Increase account amount and persist it
+
+  ## Params
+
+  - account[Account]
+  - amount[Float]: value which will be added to current amount and persisted.
+  """
+  def add_amount(account, amount, repository \\ accounts_repo()) do
+    account = %{account | amount: account.amount + amount}
+    write(account, repository)
+    {:ok, account}
+  end
+
+  @doc """
+  Subtract account amount and persist it
+
+  ## Params
+
+  - account[Account]
+  - amount[Float]: value which will be subtracted to current amount and persisted.
+  """
+  def subtract_amount(account, amount, repository \\ accounts_repo()) do
+    account = %{account | amount: account.amount - amount}
+    write(account, repository)
+    {:ok, account}
+  end
+
   defp write(account, repository_name) do
-    accounts = read_accounts(repository_name) ++ [account]
-    binary_accounts = :erlang.term_to_binary(accounts)
-    File.write(repository_name, binary_accounts)
+    case __MODULE__.find(account.id, repository_name) do
+      nil ->
+        accounts = read_accounts(repository_name) ++ [account]
+        binary_accounts = :erlang.term_to_binary(accounts)
+        File.write(repository_name, binary_accounts)
+
+      %Account{} ->
+        accounts =
+          Enum.map(read_accounts(repository_name), fn a ->
+            if account.id == a.id, do: account, else: a
+          end)
+
+        binary_accounts = :erlang.term_to_binary(accounts)
+        File.write(repository_name, binary_accounts)
+    end
   end
 end

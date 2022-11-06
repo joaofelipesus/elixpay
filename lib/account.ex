@@ -1,7 +1,9 @@
 defmodule Account do
   defstruct id: nil, pix_key: nil, amount: 0.0
 
-  @repository_name "accounts.txt"
+  @accounts_repo "accounts.txt"
+
+  def accounts_repo, do: @accounts_repo
 
   @doc """
   Create a new account if there is no previous register with same id or pix_key.
@@ -11,7 +13,7 @@ defmodule Account do
   - pix_key[String] -> key used to identify an account.
   - amount[Float] -> value transfered from an account to another.
   """
-  def create(pix_key, amount, repository_name \\ @repository_name) do
+  def create(pix_key, amount, repository_name \\ accounts_repo()) do
     case get_account_by_pix_key(pix_key, repository_name) do
       %Account{} ->
         {:error, "Pix key already related to an account"}
@@ -27,7 +29,7 @@ defmodule Account do
   @doc """
   Return accounts from received repository.
   """
-  def read_accounts(repository_name \\ @repository_name) do
+  def read_accounts(repository_name \\ accounts_repo()) do
     {:ok, accounts} = File.read(repository_name)
     :erlang.binary_to_term(accounts)
   end
@@ -40,7 +42,7 @@ defmodule Account do
   - pix_key[String]: string used to identify an account.
   - repository_name[String]: file name used to search accounts.
   """
-  def get_account_by_pix_key(pix_key, repository_name \\ @repository_name) do
+  def get_account_by_pix_key(pix_key, repository_name \\ accounts_repo()) do
     read_accounts(repository_name)
     |> Enum.find(fn account -> account.pix_key == pix_key end)
   end
@@ -52,7 +54,7 @@ defmodule Account do
 
   - id[String]: id of an account.
   """
-  def find(id, repository_name \\ @repository_name) do
+  def find(id, repository_name \\ accounts_repo()) do
     read_accounts(repository_name)
     |> Enum.find(fn account -> account.id == id end)
   end
